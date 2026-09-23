@@ -1,0 +1,54 @@
+{
+  "title": "Face of Christ \u2014 a computational engraving after Claude Mellan",
+  "source": "https://www.metmuseum.org/art/collection/search/393752",
+  "source_sha256": "d3d45aaf333e70dc5b1a019640ae8a4161a1e36e6491e49533905c4affef1649",
+  "reference_is_embedded_in_output": false,
+  "canvas_pixels": [
+    16000,
+    19126
+  ],
+  "centerline_subpaths": 1,
+  "spiral_turns": 210,
+  "centerline_samples": 894552,
+  "stroke_width_range_pixels": [
+    0.8066710069526695,
+    58.278079763445504
+  ],
+  "maximum_width_over_local_spacing": 0.8800000000000001,
+  "origin_pixels": [
+    8030.597026305757,
+    10784.06781789639
+  ],
+  "source_center_fractions": [
+    0.5020968356843309,
+    0.5689167974882261
+  ],
+  "all_widths_strictly_positive": true,
+  "raster_validation": {
+    "coverage_threshold": "128/255",
+    "ink_connectivity": 8,
+    "paper_connectivity": 4,
+    "ink_components": 1,
+    "paper_components": 1,
+    "ink_pixels": 81579983,
+    "passed": true
+  },
+  "parameters": {
+    "input": null,
+    "output": "output/face_of_christ",
+    "width": 16000,
+    "turns": 210,
+    "center": null,
+    "gamma": 0.95,
+    "detail": 0.2,
+    "descreen": null,
+    "min_width": 0.055,
+    "max_width": 0.88,
+    "ink": "#24231f",
+    "paper": "#f5f0e4",
+    "svg": true,
+    "geometry": false,
+    "verify_raster": true
+  },
+  "elapsed_seconds": 20.25
+}
