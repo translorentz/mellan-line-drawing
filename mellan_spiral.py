@@ -381,7 +381,7 @@ def write_svg(outline: np.ndarray, geometry: Geometry, path: Path,
 
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--input", type=Path, help="custom photo; default: bundled Mellan reference")
+    p.add_argument("--input", type=Path, help="any image to draw; default: the Mellan reference")
     p.add_argument("--output", type=Path, default=HERE / "output" / "face_of_christ", help="output filename prefix (default: beside this script)")
     p.add_argument("--width", type=int, default=16000, help="PNG width in pixels (default: 16000)")
     p.add_argument("--turns", type=int, default=210, help="spiral revolutions (default: 210)")

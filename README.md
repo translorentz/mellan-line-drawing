@@ -1,7 +1,9 @@
-# Face of Christ: one continuous spiral
+# Mellan line drawing
 
-A standalone reconstruction of Claude Mellan's 1649 engraving technique: a
-portrait drawn as one continuous spiral line whose width follows the tones.
+Turns any image into a single continuous spiral line whose width follows the
+tones, after Claude Mellan's 1649 engraving *Face of Christ on St. Veronica's
+Cloth*. Point it at your own photo with `--input`. With no input, it redraws
+Mellan's engraving itself.
 
 ## Run
 
@@ -11,7 +13,7 @@ Use Python 3.10 or newer. From the repository root:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python mellan_spiral.py --svg --verify-raster
+python mellan_spiral.py --input photo.jpg --output output/photo --svg --verify-raster
 ```
 
 On Windows, activate with `.venv\Scripts\activate` instead. On first run
@@ -19,6 +21,27 @@ the script downloads the public-domain museum scan to
 `assets/mellan_1649_met.jpg`; later runs work offline. Alternatively, place the
 scan there yourself or pass any portrait with `--input`. No API key or
 image-generation service is required.
+
+## Using your own image
+
+`--input` accepts any image Pillow can open (JPEG, PNG, TIFF, WebP, …), in
+color or grayscale. It is converted to grayscale, EXIF rotation is honoured,
+and transparent areas are treated as white paper. Tones are auto-levelled
+between the 0.5th and 99.5th brightness percentiles, so no pre-editing is
+needed.
+
+- **Spiral origin.** The spiral starts at the image centre by default. For a
+  portrait, place it on the nose or another focal point with `--center X Y`,
+  in fractions of the image width and height (each 0.1–0.9, measured from the
+  top left).
+- **Framing.** The whole image is drawn; crop it beforehand to frame the
+  subject. The output follows the input's proportions.
+- **Output name.** Outputs default to `output/face_of_christ*`, so pass
+  `--output` to keep renders of different images apart.
+- **Tuning.** Low-contrast photos benefit from a higher `--detail`. Raise
+  `--descreen` to smooth away halftone dots, film grain, or engraved hatching
+  in scans. For a finer image, raise `--turns` and `--width` together.
+
 
 ## Resolution and continuity
 
@@ -43,17 +66,17 @@ preserves all 256 levels of antialiased ink coverage.
 ## Examples
 
 ```sh
-# High-resolution PNG, SVG, and pixel connectivity check
-python mellan_spiral.py --svg --verify-raster
+# Your photo, spiral starting at the nose
+python mellan_spiral.py --input portrait.jpg --center 0.50 0.54 --output output/portrait --svg
 
-# Fast preview
-python mellan_spiral.py --width 3200 --output output/preview
+# Fast preview of your photo
+python mellan_spiral.py --input portrait.jpg --width 3200 --output output/portrait_preview
+
+# Mellan's own engraving (no --input): full-resolution PNG, SVG, and connectivity check
+python mellan_spiral.py --svg --verify-raster
 
 # Larger print with verification
 python mellan_spiral.py --width 24000 --svg --verify-raster --output output/large
-
-# Another portrait; set the origin at its nose in image fractions
-python mellan_spiral.py --input portrait.jpg --center 0.50 0.54 --svg --verify-raster
 
 # Export the ordered centerline and width samples
 python mellan_spiral.py --geometry --svg --verify-raster
@@ -61,8 +84,8 @@ python mellan_spiral.py --geometry --svg --verify-raster
 
 `--width` accepts 400–32000 pixels. `--turns` controls spatial detail.
 `--gamma` below 1 broadens shadows; above 1 opens them up. `--detail` adjusts
-local contrast. `--descreen` controls suppression of old engraved lines in a
-reference image. `--ink` and `--paper` accept six-digit hex colors.
+local contrast. `--descreen` sets the blur in source pixels used to suppress
+fine texture (default 0.6 for your images, 5 for the Mellan scan). `--ink` and `--paper` accept six-digit hex colors.
 
 Default outputs always go into the repository's `output/`, even when invoked
 from another working directory. Existing outputs at the same prefix are
@@ -70,19 +93,20 @@ replaced. Lower-resolution previews may not preserve raster continuity.
 
 ## Method
 
-1. Crop the museum scan to the portrait and veil, excluding the lower caption.
-   Suppress its fine engraved pattern to recover the underlying tones.
-2. Generate one open spiral starting at the nose. Inner turns are circular;
-   the outer turns gradually approach the rounded rectangular veil.
+1. Load the image as grayscale and lightly blur it to recover the underlying
+   tones. For the default Mellan scan, crop to the portrait and veil and blur
+   more strongly to suppress his engraved line pattern.
+2. Generate one open spiral starting at the origin. Inner turns are circular;
+   the outer turns gradually approach the rounded rectangular frame.
 3. Sample brightness along the line. Shadows broaden it; highlights narrow it.
    Correct widths for the perpendicular spacing between neighboring turns.
 4. Keep widths positive, cap them at 88% of local spacing, and limit the
    offset at the tight central curl. Join both sides with rounded caps.
 5. Render that same continuous ribbon to PNG and SVG.
 
-This is a newly calculated engraving based on Mellan's portrait, rather than
-an exact tracing of his hand-cut line. The reference supplies only the tones;
-every mark in the output belongs to the computed spiral.
+The input image supplies only the tones; every mark in the output belongs to
+the computed spiral. Rendered from Mellan's print, the result is a newly
+calculated engraving, not a tracing of his hand-cut line.
 
 ## Files
 
@@ -90,15 +114,13 @@ every mark in the output belongs to the computed spiral.
 | --- | --- |
 | `mellan_spiral.py` | Renderer, SVG export, and raster continuity checks |
 | `requirements.txt` | Independent Python dependencies |
-| `assets/mellan_1649_met.jpg` | Public-domain museum reference (downloaded on first run) |
+| `assets/mellan_1649_met.jpg` | Default Mellan reference (downloaded on first run without `--input`) |
 | `examples/` | High-resolution render report |
 | `output/` | Generated full PNG, SVG, previews, and report |
 
-Full-resolution outputs can be recreated offline with the command above.
-
 ## Attribution
 
-Claude Mellan (1598–1688), *Face of Christ on St. Veronica's Cloth*, 1649.
+The default reference is Claude Mellan (1598–1688), *Face of Christ on St. Veronica's Cloth*, 1649.
 Engraving, second state of two. Metropolitan Museum of Art, accession
 **69.581.5**. Purchase, The Elisha Whittelsey Collection, The Elisha Whittelsey
 Fund, 1969. The museum marks the image **Public Domain**.
