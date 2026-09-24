@@ -35,6 +35,9 @@ HERE = Path(__file__).resolve().parent
 SOURCE_URL = "https://images.metmuseum.org/CRDImages/dp/original/DP822671.jpg"
 SOURCE_PAGE = "https://www.metmuseum.org/art/collection/search/393752"
 SOURCE_FILE = HERE / "assets" / "mellan_1649_met.jpg"
+# Mellan's own density; --spacing scales these defaults.
+MELLAN_TURNS, MELLAN_MIN_WIDTH, MELLAN_MAX_WIDTH = 210, 0.055, 0.88
+DEFAULT_SPACING = 2.0
 # Pixels in the 2729 x 3645 museum image. Omit the separate lower inscription.
 SOURCE_CROP = (52, 35, 2675, 3220)
 SOURCE_NOSE = (1369.0, 1847.0)
@@ -384,13 +387,15 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--input", type=Path, help="any image to draw; default: the Mellan reference")
     p.add_argument("--output", type=Path, default=HERE / "output" / "face_of_christ", help="output filename prefix (default: beside this script)")
     p.add_argument("--width", type=int, default=16000, help="PNG width in pixels (default: 16000)")
-    p.add_argument("--turns", type=int, default=210, help="spiral revolutions (default: 210)")
+    p.add_argument("--spacing", type=float, default=DEFAULT_SPACING,
+                   help=f"line spacing relative to Mellan's density; larger is sparser, 1 is his 210 turns (default: {DEFAULT_SPACING:g})")
+    p.add_argument("--turns", type=int, help="spiral revolutions (default: 210 / spacing)")
     p.add_argument("--center", type=float, nargs=2, metavar=("X", "Y"), help="origin in source fractions, e.g. 0.50 0.55")
     p.add_argument("--gamma", type=float, default=0.95, help="darkness exponent; smaller makes broader shadows")
     p.add_argument("--detail", type=float, default=0.20, help="broad local contrast, from 0 to 1")
     p.add_argument("--descreen", type=float, help="Gaussian sigma in source pixels; default: 5 for Mellan, 0.6 for photos")
-    p.add_argument("--min-width", type=float, default=0.055, help="minimum ink width as a fraction of turn spacing")
-    p.add_argument("--max-width", type=float, default=0.88, help="maximum ink width as a fraction of turn spacing")
+    p.add_argument("--min-width", type=float, help="minimum ink width as a fraction of turn spacing (default: 0.055 / sqrt(spacing))")
+    p.add_argument("--max-width", type=float, help="maximum ink width as a fraction of turn spacing (default: 0.88 / sqrt(spacing))")
     p.add_argument("--ink", default=INK, help="six-digit ink color, e.g. '#24231f'")
     p.add_argument("--paper", default=PAPER, help="six-digit paper color")
     p.add_argument("--svg", action="store_true", help="also save the single-ribbon vector artwork")
@@ -402,6 +407,17 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     p = parser()
     args = p.parse_args(argv)
+    if not math.isfinite(args.spacing) or not 0.5 <= args.spacing <= 10:
+        p.error("--spacing must be between 0.5 and 10")
+    # Wider spacing means fewer turns, each narrower relative to its gap, so
+    # paper opens up between lines while strokes stay about as bold as before.
+    thinning = math.sqrt(args.spacing)
+    if args.turns is None:
+        args.turns = max(10, round(MELLAN_TURNS / args.spacing))
+    if args.min_width is None:
+        args.min_width = MELLAN_MIN_WIDTH / thinning
+    if args.max_width is None:
+        args.max_width = min(0.90, MELLAN_MAX_WIDTH / thinning)
     if not 400 <= args.width <= 32000:
         p.error("--width must be between 400 and 32000")
     if not 10 <= args.turns <= 600:

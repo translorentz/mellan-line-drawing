@@ -40,20 +40,42 @@ needed.
   `--output` to keep renders of different images apart.
 - **Tuning.** Low-contrast photos benefit from a higher `--detail`. Raise
   `--descreen` to smooth away halftone dots, film grain, or engraved hatching
-  in scans. For a finer image, raise `--turns` and `--width` together.
+  in scans.
+
+## Line spacing
+
+`--spacing` sets how open the drawing is. It is measured against Mellan's own
+density: `--spacing 1` is his 210 turns, the default `2` is a sparser 105
+turns, and `4` gives 52 widely spaced turns. Larger values draw fewer turns
+with more paper between them. Line widths scale with the square root of the
+spacing, so each line gets somewhat bolder while the gaps between them grow
+faster. Smaller values, down to `0.5`, are denser than Mellan's print and may
+need a larger `--width` to stay continuous.
+
+```sh
+python mellan_spiral.py --input photo.jpg --spacing 1   # dense, like Mellan's print
+python mellan_spiral.py --input photo.jpg --spacing 3   # open and graphic
+```
+
+`--spacing` only sets defaults. An explicit `--turns`, `--min-width` or
+`--max-width` overrides the value it would derive: 210 / spacing turns, and
+0.055 / √spacing and 0.88 / √spacing of the local gap.
 
 
 ## Resolution and continuity
 
-The default PNG is **16,000 × 19,126 pixels**, with **210 continuous turns**.
-The supplied render was checked across all **306,016,000 pixels**, using a
+The default PNG is 16,000 pixels wide, and its height follows the image
+(19,126 pixels for the Mellan scan). The included render was made at Mellan's
+own density (`--spacing 1`, **210 continuous turns**) and was checked across all **306,016,000 pixels**, using a
 50% ink-coverage threshold. The result is **one connected ink component**
 (8-neighbor connectivity) and **one connected paper component** (4-neighbor
 connectivity). These checks detect broken strokes and paper islands caused
 by neighboring turns touching. See [the render report](examples/render_report.json).
 
 `--verify-raster` repeats these checks and returns a nonzero exit status on
-failure. Raising the number of turns can require a higher raster resolution.
+failure. The default `--spacing 2` and sparser settings passed the same
+check at 16,000 pixels in testing. Denser settings can require a higher
+raster resolution.
 
 The SVG contains one ink path and no embedded portrait or image mask. Its
 closed path is the outline of one open, continuously varying-width stroke.
@@ -69,11 +91,14 @@ preserves all 256 levels of antialiased ink coverage.
 # Your photo, spiral starting at the nose
 python mellan_spiral.py --input portrait.jpg --center 0.50 0.54 --output output/portrait --svg
 
+# Sparser, bolder lines
+python mellan_spiral.py --input portrait.jpg --spacing 3 --output output/portrait_open
+
 # Fast preview of your photo
 python mellan_spiral.py --input portrait.jpg --width 3200 --output output/portrait_preview
 
-# Mellan's own engraving (no --input): full-resolution PNG, SVG, and connectivity check
-python mellan_spiral.py --svg --verify-raster
+# Mellan's own engraving at his original density, with connectivity check
+python mellan_spiral.py --spacing 1 --svg --verify-raster
 
 # Larger print with verification
 python mellan_spiral.py --width 24000 --svg --verify-raster --output output/large
@@ -82,7 +107,8 @@ python mellan_spiral.py --width 24000 --svg --verify-raster --output output/larg
 python mellan_spiral.py --geometry --svg --verify-raster
 ```
 
-`--width` accepts 400–32000 pixels. `--turns` controls spatial detail.
+`--width` accepts 400–32000 pixels. `--spacing` (0.5–10) sets line density;
+`--turns`, `--min-width` and `--max-width` fine-tune it.
 `--gamma` below 1 broadens shadows; above 1 opens them up. `--detail` adjusts
 local contrast. `--descreen` sets the blur in source pixels used to suppress
 fine texture (default 0.6 for your images, 5 for the Mellan scan). `--ink` and `--paper` accept six-digit hex colors.
@@ -100,7 +126,7 @@ replaced. Lower-resolution previews may not preserve raster continuity.
    the outer turns gradually approach the rounded rectangular frame.
 3. Sample brightness along the line. Shadows broaden it; highlights narrow it.
    Correct widths for the perpendicular spacing between neighboring turns.
-4. Keep widths positive, cap them at 88% of local spacing, and limit the
+4. Keep widths positive, cap them at `--max-width` of local spacing, and limit the
    offset at the tight central curl. Join both sides with rounded caps.
 5. Render that same continuous ribbon to PNG and SVG.
 
